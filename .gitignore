@@ -1,2 +1,12 @@
-".env" 
-"__pycache__/" 
+# Python 
+__pycache__/ 
+*.pyc 
+*.pyo 
+.env 
+Режим вывода команд на экран (ECHO) включен.
+# Database 
+*.db 
+*.sqlite 
+Режим вывода команд на экран (ECHO) включен.
+# System 
+git/ 
