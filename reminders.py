@@ -13,7 +13,7 @@ async def check_reminders(bot):
             for reminder in reminders:
                 reminder_id, chat_id, name, time_str, is_sent = reminder
                 
-                # Простой текст БЕЗ Markdown разметки
+                
                 await bot.send_message(
                     chat_id=chat_id,
                     text=f"⏰ Напоминание: {name}\nВремя: {time_str}"
