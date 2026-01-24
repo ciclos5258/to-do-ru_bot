@@ -7,6 +7,8 @@ from database import Database
 from states import TaskStates
 from keyboards import create_main_keyboard, create_tasks_keyboard
 from utils import parse_time, get_time_until_reminder, format_tasks_list
+from keyboards import get_cancel_inline_keyboard
+
 
 router = Router()
 db = Database()
@@ -36,8 +38,39 @@ async def start_handler(message: types.Message):
 @router.message(Command("add"))
 @router.message(F.text == "➕ Добавить задачу")
 async def add_task_command(message: types.Message, state: FSMContext):
-    await message.answer("📝 Введите текст новой задачи:", reply_markup=ReplyKeyboardRemove())
+    await message.answer("📝 Введите текст новой задачи:", reply_markup=get_cancel_inline_keyboard())
     await state.set_state(TaskStates.waiting_for_task)
+
+
+@router.message(Command("cancel"))
+@router.message(F.text.casefold() == "отмена")
+async def cancel_handler(message: types.Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state is None:
+        return
+
+    await state.clear()
+    await message.answer(
+        "Действие отменено.",
+        reply_markup=create_main_keyboard()
+    )
+
+@router.callback_query(F.data == "cancel_action")
+async def cancel_handler_inline(callback: types.CallbackQuery, state: FSMContext):
+    current_state = await state.get_state()
+    
+    if current_state is not None:
+        await state.clear()
+        
+        await callback.message.edit_text("Действие отменено.")
+        
+        await callback.message.answer(reply_markup=create_main_keyboard())
+    else:
+        
+        await callback.answer("Нет активного действия для отмены")
+        await callback.message.delete()
+    
+    await callback.answer()
 
 @router.message(TaskStates.waiting_for_task)
 async def handle_task_input(message: types.Message, state: FSMContext):
@@ -118,24 +151,6 @@ async def delete_task_handler(message: types.Message, command: CommandObject):
     except ValueError:
         await message.answer("❌ ID задачи должен быть числом!")
 
-@router.message(F.text == "✅ Выполненные")
-async def show_completed_handler(message: types.Message):
-    chat_id = message.chat.id
-    tasks = db.get_tasks(chat_id, show_done=True)
-    
-    completed_tasks = [task for task in tasks if task[2]]
-    
-    if not completed_tasks:
-        await message.answer("📭 У вас нет выполненных задач!", reply_markup=create_main_keyboard())
-        return
-    
-    tasks_text = "✅ Выполненные задачи:\n\n"
-    for i, task in enumerate(completed_tasks, 1):
-        task_id, text, is_done = task
-        tasks_text += f"{i}. ✅ {text}\nID: {task_id}\n\n"
-    
-    await message.answer(tasks_text, reply_markup=create_main_keyboard())
-
 @router.message(Command("reminders"))
 async def show_reminders_handler(message: types.Message):
     chat_id = message.chat.id
@@ -160,7 +175,7 @@ async def show_reminders_handler(message: types.Message):
 
 @router.message(F.text == "⏰ Добавить напоминание")
 async def add_reminder_command(message: types.Message, state: FSMContext):
-    await message.answer("📝 Введите название напоминания:", reply_markup=ReplyKeyboardRemove())
+    await message.answer("📝 Введите название напоминания:", reply_markup=get_cancel_inline_keyboard())
     await state.set_state(TaskStates.waiting_for_reminder_name)
 
 @router.message(TaskStates.waiting_for_reminder_name)
