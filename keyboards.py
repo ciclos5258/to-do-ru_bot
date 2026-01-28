@@ -20,7 +20,7 @@ def create_tasks_keyboard(tasks):
         if not is_done:
             keyboard.append([
                 InlineKeyboardButton(
-                    text=f"✅ {text[:15]}", 
+                    text=f"✅ {text[:20]}..", 
                     callback_data=f"complete_{task_id}"
                 )
             ])
@@ -39,3 +39,4 @@ def schedule_inline_keyboard():
             [InlineKeyboardButton(text="Пн", callback_data="Mon_add"), InlineKeyboardButton(text="Вт", callback_data="Tue_add"), InlineKeyboardButton(text="Ср", callback_data="Wed_add")],
             [InlineKeyboardButton(text="Чт", callback_data="Thu_add"), InlineKeyboardButton(text="Пт", callback_data="Fri_add")]
         ]
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)

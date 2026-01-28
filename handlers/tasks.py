@@ -28,13 +28,19 @@ async def handle_task_input(message: types.Message, state: FSMContext):
 @router.message(Command("list"))
 @router.message(F.text == "📋 Мои задачи")
 async def show_tasks_handler(message: types.Message):
-    tasks = db.get_tasks(message.chat.id)
-    reminders = db.get_user_reminders(message.chat.id)
-    if not tasks and not [r for r in reminders if not r[3]]:
-        await message.answer("📭 Задач нет!", reply_markup=create_main_keyboard())
-        return
-    await message.answer(format_tasks_list(tasks, reminders), reply_markup=create_tasks_keyboard(tasks))
+    user_id = message.chat.id
+    
+    tasks = db.get_tasks(user_id)
+    reminders = db.get_user_reminders(user_id)
+    schedule = db.get_full_schedule(user_id)
 
+    response_text = format_tasks_list(tasks, reminders, schedule)
+    
+    await message.answer(
+        response_text, 
+        reply_markup=create_tasks_keyboard(tasks),
+        parse_mode="Markdown"
+    )
 @router.callback_query(F.data.startswith('complete_'))
 async def complete_task_callback(callback: types.CallbackQuery):
     task_id = int(callback.data.split('_')[1])

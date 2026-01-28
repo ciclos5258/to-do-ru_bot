@@ -41,27 +41,32 @@ def get_time_until_reminder(reminder_time):
     else:
         return f"{minutes_left}м"
 
-def format_tasks_list(tasks, reminders=None):
-    """Форматирует список задач и напоминаний в текст"""
-    if not tasks and not reminders:
-        return "📭 У вас нет активных задач и напоминаний!"
-    
-    tasks_text = "📋 Ваши активные задачи и напоминания:\n\n"
+def format_tasks_list(tasks, reminders, schedule=None):
+    text = "📋 **ВАШ СПИСОК ДЕЛ**\n\n"
     
     if tasks:
-        tasks_text += "📝 Задачи:\n"
+        text += "✅ **Задачи:**\n"
         for i, task in enumerate(tasks, 1):
-            task_id, text, is_done = task
-            status = "✅" if is_done else "⏳"
-            tasks_text += f"{i}. {status} {text}\nID: {task_id}\n\n"
-    
-    if reminders:
-        active_reminders = [r for r in reminders if not r[3]]
-        if active_reminders:
-            tasks_text += "⏰ Напоминания:\n"
-            for i, reminder in enumerate(active_reminders, 1):
-                reminder_id, name, time_str, is_sent = reminder
-                time_left = get_time_until_reminder(time_str)
-                tasks_text += f"{i + len(tasks) if tasks else i}. ⏰ {name} - {time_str} (через {time_left})\nID: R{reminder_id}\n\n"
-    
-    return tasks_text
+            text += f"{i}. {task[1]}\n"
+        text += "\n"
+
+    active_reminders = [r for r in reminders if not r[3]]
+    if active_reminders:
+        text += "⏰ **Напоминания:**\n"
+        for r in active_reminders:
+            text += f"• {r[1]} в {r[2]}\n"
+        text += "\n"
+
+    if schedule:
+        text += "🗓 **Постоянное расписание:**\n"
+        current_day = ""
+        for day, time, task_text in schedule:
+            if day != current_day:
+                text += f"┈┈ {day.capitalize()} ┈┈\n"
+                current_day = day
+            text += f"└ {time} — {task_text}\n"
+            
+    if not tasks and not active_reminders and not schedule:
+        return "📭 Ваш список пока пуст!"
+        
+    return text

@@ -40,7 +40,16 @@ class Database:
                 )
             ''')
             conn.commit()
-    
+            
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS schedule (
+                    user_id INTEGER,
+                    day TEXT,
+                    time TEXT,
+                    text TEXT
+                )
+            """)
+            conn.commit()
     def add_user(self, chat_id, username, first_name):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
@@ -119,3 +128,28 @@ class Database:
             cursor.execute('DELETE FROM reminders WHERE id = ? AND chat_id = ?', (reminder_id, chat_id))
             conn.commit()
             return cursor.rowcount > 0
+    def add_schedule_item(self, user_id, day, time, text):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO schedule (user_id, day, time, text) VALUES (?, ?, ?, ?)",
+                (user_id, day, time, text)
+            )
+            conn.commit()
+    def get_schedule_for_now(self, day, time):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT user_id, text FROM schedule WHERE day = ? AND time = ?",
+                (day, time)
+            )
+            return cursor.fetchall()
+        
+    def get_full_schedule(self, user_id):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT day, time, text FROM schedule WHERE user_id = ? ORDER BY day, time",
+                (user_id,)
+            )
+            return cursor.fetchall()

@@ -6,7 +6,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
 
 from handlers import get_handlers_router 
-from reminders import check_reminders
+from handlers.reminders import check_reminders
 from database import Database
 
 logging.basicConfig(

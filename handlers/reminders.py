@@ -1,13 +1,16 @@
+import asyncio
+import logging
+import datetime
 from aiogram import Router, types, F
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from database import Database
 from states import TaskStates
-from utils import parse_time, get_time_until_reminder
+from utils import parse_time
 from keyboards import create_main_keyboard, get_cancel_inline_keyboard
 
 router = Router()
 db = Database()
+logger = logging.getLogger(__name__)
 
 @router.message(F.text == "⏰ Добавить напоминание")
 async def add_reminder_command(message: types.Message, state: FSMContext):
@@ -34,8 +37,35 @@ async def handle_reminder_time(message: types.Message, state: FSMContext):
     await message.answer(f"⏰ Напоминание '{data['reminder_name']}' установлено на {formatted_time}", reply_markup=create_main_keyboard())
     await state.clear()
 
-@router.message(Command("schedule"))
-@router.message(F.text == "📜 Расписание")
-async def schedule_command(message: types.Message):
-    
-    await message.answer("📅 Раздел расписания в разработке...")
+async def check_reminders(bot):
+    while True:
+        try:
+            reminders = db.get_due_reminders()
+            for reminder in reminders:
+                reminder_id, chat_id, name, time_str, is_sent = reminder
+                await bot.send_message(
+                    chat_id=chat_id,
+                    text=f"⏰ Напоминание: {name}\nВремя: {time_str}"
+                )
+                db.mark_reminder_sent(reminder_id)
+
+            now = datetime.datetime.now()
+            current_time = now.strftime("%H:%M")
+            days_map = {
+                0: "monday", 1: "tuesday", 2: "wednesday", 
+                3: "thursday", 4: "friday", 5: "saturday", 6: "sunday"
+            }
+            current_day = days_map[now.weekday()]
+
+            schedule_items = db.get_schedule_for_now(current_day, current_time)
+            for user_id, text in schedule_items:
+                await bot.send_message(
+                    chat_id=user_id,
+                    text=f"🗓 **Расписание на сегодня ({current_day}):**\n🔔 {text}"
+                )
+            
+            await asyncio.sleep(60)
+            
+        except Exception as e:
+            logger.error(f"Error in check_reminders: {e}")
+            await asyncio.sleep(60)

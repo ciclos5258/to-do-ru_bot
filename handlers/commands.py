@@ -26,8 +26,7 @@ async def cancel_handler(message: types.Message, state: FSMContext):
 async def cancel_handler_inline(callback: types.CallbackQuery, state: FSMContext):
     if await state.get_state() is not None:
         await state.clear()
-        await callback.message.edit_text("Действие отменено.")
-        await callback.message.answer(reply_markup=create_main_keyboard())
+        await callback.message.answer("Действие отменено.", reply_markup=create_main_keyboard())
     else:
         await callback.answer("Нет активного действия")
         await callback.message.delete()
