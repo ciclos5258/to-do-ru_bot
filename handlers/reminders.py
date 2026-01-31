@@ -38,34 +38,33 @@ async def handle_reminder_time(message: types.Message, state: FSMContext):
     await state.clear()
 
 async def check_reminders(bot):
+    last_check_minute = -1
+
     while True:
         try:
+            now = datetime.datetime.now()
+            if now.minute == last_check_minute:
+                await asyncio.sleep(1)
+                continue
+            
+            last_check_minute = now.minute
+            current_time = now.strftime("%H:%M")
+            
             reminders = db.get_due_reminders()
             for reminder in reminders:
                 reminder_id, chat_id, name, time_str, is_sent = reminder
-                await bot.send_message(
-                    chat_id=chat_id,
-                    text=f"⏰ Напоминание: {name}\nВремя: {time_str}"
-                )
+                await bot.send_message(chat_id, f"⏰ Напоминание: {name}")
                 db.mark_reminder_sent(reminder_id)
 
-            now = datetime.datetime.now()
-            current_time = now.strftime("%H:%M")
-            days_map = {
-                0: "monday", 1: "tuesday", 2: "wednesday", 
-                3: "thursday", 4: "friday", 5: "saturday", 6: "sunday"
-            }
+            days_map = {0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu", 4: "Fri", 5: "Sat", 6: "Sun"}
             current_day = days_map[now.weekday()]
 
             schedule_items = db.get_schedule_for_now(current_day, current_time)
             for user_id, text in schedule_items:
-                await bot.send_message(
-                    chat_id=user_id,
-                    text=f"🗓 **Расписание на сегодня ({current_day}):**\n🔔 {text}"
-                )
+                await bot.send_message(user_id, f"🗓 Расписание ({current_day}):\n🔔 {text}")
             
-            await asyncio.sleep(60)
+            await asyncio.sleep(1)
             
         except Exception as e:
             logger.error(f"Error in check_reminders: {e}")
-            await asyncio.sleep(60)
+            await asyncio.sleep(10)

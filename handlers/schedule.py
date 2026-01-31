@@ -4,6 +4,7 @@ from keyboards import schedule_inline_keyboard
 from states import ScheduleState
 from aiogram.fsm.context import FSMContext
 from database import Database
+from utils import parse_time
 
 router = Router()
 db = Database()
@@ -11,7 +12,6 @@ db = Database()
 @router.message(Command("schedule"))
 @router.message(F.text == "📜 Расписание")
 async def schedule_command(message: types.Message):
-    await message.answer("📅 Раздел расписания в разработке...")
     await message.answer("Выберите день недели", reply_markup=schedule_inline_keyboard())
 
 @router.callback_query(F.data.endswith("_add"))
@@ -24,7 +24,15 @@ async def process_day(callback: types.CallbackQuery, state: FSMContext):
 
 @router.message(ScheduleState.time)
 async def process_time(message: types.Message, state: FSMContext):
-    await state.update_data(time=message.text)
+    time_data = parse_time(message.text.strip())
+    
+    if not time_data:
+        await message.answer("❌ Неверный формат! Используйте ЧЧ:ММ (например, 08:30 или 15:00)")
+        return
+    
+    formatted_time = f"{time_data[0]:02d}:{time_data[1]:02d}"
+    
+    await state.update_data(time=formatted_time)
     await message.answer("Введите текст напоминания:")
     await state.set_state(ScheduleState.text)
 

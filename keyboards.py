@@ -37,7 +37,8 @@ def get_cancel_inline_keyboard():
 def schedule_inline_keyboard():
     keyboard = [
             [InlineKeyboardButton(text="Пн", callback_data="Mon_add"), InlineKeyboardButton(text="Вт", callback_data="Tue_add"), InlineKeyboardButton(text="Ср", callback_data="Wed_add")],
-            [InlineKeyboardButton(text="Чт", callback_data="Thu_add"), InlineKeyboardButton(text="Пт", callback_data="Fri_add")]
+            [InlineKeyboardButton(text="Чт", callback_data="Thu_add"), InlineKeyboardButton(text="Пт", callback_data="Fri_add")],
+            [InlineKeyboardButton(text="Сб", callback_data="Sat_add"), InlineKeyboardButton(text="Вс", callback_data="Sun_add")]
         ]
 
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
