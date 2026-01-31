@@ -20,7 +20,6 @@ def create_tasks_keyboard(tasks):
         if not is_done:
             keyboard.append([
                 InlineKeyboardButton(
-                    text=f"✅ {text[:20]}..", 
                     text=f"✅ {text[:25]}..", 
                     callback_data=f"complete_{task_id}"
                 )
